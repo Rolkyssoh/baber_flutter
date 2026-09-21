@@ -1,6 +1,7 @@
 import 'package:barber_shops/screens/authentication/auth_dashboard.dart';
 import 'package:barber_shops/screens/authentication/forget_pwd.dart';
 import 'package:barber_shops/screens/authentication/sign_up_form.dart';
+import 'package:barber_shops/screens/hom_screen.dart';
 import 'package:barber_shops/utils/app_text_field.dart';
 import 'package:barber_shops/utils/social_icons.dart';
 import 'package:flutter/material.dart';
@@ -159,7 +160,10 @@ class _SignInFormState extends State<SignInForm> {
                   child: ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
-                        // TODO: sign in
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => HomeScreen()),
+                        );
                       }
                     },
                     style: ElevatedButton.styleFrom(
