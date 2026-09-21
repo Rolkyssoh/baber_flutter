@@ -74,7 +74,7 @@ class WelcomScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () { 
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(

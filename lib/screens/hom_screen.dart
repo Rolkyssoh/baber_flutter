@@ -1,5 +1,9 @@
+import 'package:barber_shops/dto/sho.dart';
 import 'package:barber_shops/model_service/shop_model.dart';
+import 'package:barber_shops/screens/authentication/bookmark_screen.dart';
+import 'package:barber_shops/screens/notification_screen.dart';
 import 'package:barber_shops/views-model/shop_view_model.dart';
+import 'package:barber_shops/widgets/shop_card.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -23,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _nearbyFilter = 0;
   int _popularFilter = 0;
   int _navIndex = 0;
-  bool _showOnlyFavorites = false;
   final Set<String> _bookmarkedShopIds = {};
 
   @override
@@ -53,44 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
     'Make up',
     'Manicure',
   ];
-
-  // static final List<_Shop> _nearbyShops = viewModel.shop.map((shop) {
-  //   return _Shop(
-  //     name: shop.name,
-  //     address: shop.address,
-  //     distance: '1.2 km', // Placeholder value
-  //     rating: '4.8', // Placeholder value
-  //     category: "shop.category",
-  //     image: 'assets/images/haircut.jpg', // Placeholder value
-  //   );
-  // }).toList();
-
-  // static const List<_Shop> _nearbyShops = [
-  //   _Shop(
-  //     name: 'Belle Curls',
-  //     address: '0993 Novick Parkway',
-  //     distance: '1.2 km',
-  //     rating: '4.8',
-  //     category: 'Haircuts',
-  //     image: 'assets/images/haircut.jpg',
-  //   ),
-  //   _Shop(
-  //     name: 'Pretty Parlor',
-  //     address: '42 Fordem Avenue',
-  //     distance: '1.4 km',
-  //     rating: '4.9',
-  //     category: 'Make up',
-  //     image: 'assets/images/haircut2.jpg',
-  //   ),
-  //   _Shop(
-  //     name: 'Mia Bella',
-  //     address: '57 Superior Trail',
-  //     distance: '1.7 km',
-  //     rating: '4.1',
-  //     category: 'Manicure',
-  //     image: 'assets/images/haircut3.jpg',
-  //   ),
-  // ];
 
   static const List<_Shop> _popularShops = [
     _Shop(
@@ -228,21 +193,62 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const Spacer(),
         _iconButton(Icons.notifications_none, 'Voir notifications', () {
-          print("Pour les notif");
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NotificationScreen()),
+          );
         }),
         const SizedBox(width: 6),
-        _iconButton(
-          _showOnlyFavorites ? Icons.bookmark : Icons.bookmark_border,
-          _showOnlyFavorites
-              ? 'Afficher tous les shops'
-              : 'Filtrer par favoris',
-          () {
+        _iconButton(Icons.bookmark_border, 'Voir mes favoris', _openBookmarks),
+      ],
+    );
+  }
+
+  void _openBookmarks() {
+    final shopsById = <String, ShopCardData>{
+      for (final shop in viewModel.shop.map(_shopFromApi)) shop.id: shop,
+      for (final shop in _popularShops.map(_shopFromLocal)) shop.id: shop,
+    };
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BookmarkScreen(
+          shops: shopsById.values.toList(),
+          bookmarkedIds: _bookmarkedShopIds,
+          onBookmarksChanged: (bookmarkedIds) {
             setState(() {
-              _showOnlyFavorites = !_showOnlyFavorites;
+              _bookmarkedShopIds
+                ..clear()
+                ..addAll(bookmarkedIds);
             });
           },
         ),
-      ],
+      ),
+    );
+  }
+
+  ShopCardData _shopFromApi(Shop shop) {
+    return ShopCardData(
+      id: shop.id,
+      name: shop.name,
+      address: shop.address,
+      distance: '1.2 km',
+      rating: '4.8',
+      category: 'Haircuts',
+      image: shop.profileImage,
+    );
+  }
+
+  ShopCardData _shopFromLocal(_Shop shop) {
+    return ShopCardData(
+      id: shop.id,
+      name: shop.name,
+      address: shop.address,
+      distance: shop.distance,
+      rating: shop.rating,
+      category: shop.category,
+      image: shop.image,
     );
   }
 
@@ -522,7 +528,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final selected = selectedIndex == index;
           return GestureDetector(
@@ -552,130 +558,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Shop card ───────────────────────────────────────────
   Widget _buildShopCard(_Shop shop) {
-    final imageUrl = shop.image.startsWith('/')
-        ? 'http://10.0.2.2:4200${shop.image}'
-        : shop.image;
     final isBookmarked = _bookmarkedShopIds.contains(shop.id);
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    return ShopCard(
+      shop: ShopCardData(
+        id: shop.id,
+        name: shop.name,
+        address: shop.address,
+        distance: shop.distance,
+        rating: shop.rating,
+        category: shop.category,
+        image: shop.image,
       ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: imageUrl.startsWith('http')
-                ? Image.network(
-                    imageUrl,
-                    width: 64,
-                    height: 64,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 64,
-                      height: 64,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.image, color: Colors.grey),
-                    ),
-                  )
-                : Image.asset(
-                    imageUrl,
-                    width: 64,
-                    height: 64,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 64,
-                      height: 64,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.image, color: Colors.grey),
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  shop.name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: _ink,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  shop.address,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 14,
-                      color: _primary,
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      shop.distance,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Icon(Icons.star, size: 14, color: Color(0xFFFFC107)),
-                    const SizedBox(width: 3),
-                    Text(
-                      shop.rating,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _ink,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: isBookmarked
-                ? 'Retirer des favoris'
-                : 'Ajouter aux favoris',
-            onPressed: () {
-              setState(() {
-                if (isBookmarked) {
-                  _bookmarkedShopIds.remove(shop.id);
-                } else {
-                  _bookmarkedShopIds.add(shop.id);
-                }
-              });
-            },
-            icon: Icon(
-              isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-              color: isBookmarked ? _primary : _ink,
-              size: 22,
-            ),
-          ),
-        ],
-      ),
+      isBookmarked: isBookmarked,
+      onBookmarkPressed: () {
+        setState(() {
+          if (isBookmarked) {
+            _bookmarkedShopIds.remove(shop.id);
+          } else {
+            _bookmarkedShopIds.add(shop.id);
+          }
+        });
+      },
     );
   }
 
@@ -744,15 +648,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<_Shop> _filterVisibleShops(List<_Shop> shops, int filterIndex) {
-    var filteredShops = _filterShops(shops, filterIndex);
-
-    if (_showOnlyFavorites) {
-      filteredShops = filteredShops
-          .where((shop) => _bookmarkedShopIds.contains(shop.id))
-          .toList();
-    }
-
-    return filteredShops;
+    return _filterShops(shops, filterIndex);
   }
 }
 
