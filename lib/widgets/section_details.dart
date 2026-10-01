@@ -10,11 +10,13 @@ class SectionDetails extends StatelessWidget {
     required this.title,
     required this.child,
     this.action,
+    this.onTxtBtnPressed
   });
 
   final String title;
   final Widget child;
   final String? action;
+  final VoidCallback? onTxtBtnPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -35,12 +37,15 @@ class SectionDetails extends StatelessWidget {
               ),
               const Spacer(),
               if (action != null)
-                Text(
-                  action ?? '',
-                  style: GoogleFonts.poppins(
-                    color: _orange,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
+                TextButton(
+                  onPressed: onTxtBtnPressed,
+                  child: Text(
+                    action ?? '',
+                    style: GoogleFonts.poppins(
+                      color: _orange,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],

@@ -1,5 +1,5 @@
-import 'package:barber_shops/screens/shop_details/shop_details_services.dart';
-import 'package:barber_shops/widgets/section_details.dart';
+import 'package:barber_shops/layouts/more_screen_layout.dart';
+import 'package:barber_shops/screens/shop_details/shop_services_list.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -17,19 +17,15 @@ const Color _muted = Color(0xFF777777);
 const Color _ink = Color(0xFF252525);
 const Color _orange = Color(0xFFFF9800);
 
-class ServicesDetailsTab extends StatelessWidget {
-  const ServicesDetailsTab({super.key});
+class ShopDetailsServices extends StatelessWidget {
+  const ShopDetailsServices({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SectionDetails(
+    return MoreScreenLayout(
       title: 'Our Services',
-      action: 'See All',
-      onTxtBtnPressed: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ShopDetailsServices()),
-      ),
-      child: Column(
+      btnText: 'Book noww',
+      body: Column(
         children: services
             .map(
               (service) => Padding(
@@ -68,10 +64,16 @@ class ServicesDetailsTab extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 10,
-                        color: _orange,
+                      IconButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => ShopServiceList()),
+                        ),
+                        icon: const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 10,
+                          color: _orange,
+                        ),
                       ),
                     ],
                   ),

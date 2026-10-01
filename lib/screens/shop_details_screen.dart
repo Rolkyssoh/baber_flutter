@@ -29,7 +29,7 @@ class _ShopDetailsScreenState extends State<ShopDetailsScreen> {
   int _heroPage = 0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) {  
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(

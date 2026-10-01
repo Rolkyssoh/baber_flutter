@@ -1,6 +1,6 @@
 import 'package:barber_shops/dto/sho.dart';
 import 'package:barber_shops/model_service/shop_model.dart';
-import 'package:barber_shops/screens/authentication/bookmark_screen.dart';
+import 'package:barber_shops/screens/bookmark_screen.dart';
 import 'package:barber_shops/screens/notification_screen.dart';
 import 'package:barber_shops/views-model/shop_view_model.dart';
 import 'package:barber_shops/widgets/shop_card.dart';
@@ -531,7 +531,7 @@ class _HomeScreenState extends State<HomeScreen> {
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final selected = selectedIndex == index;
-          return GestureDetector(
+          return GestureDetector( 
             onTap: () => onSelected(index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
