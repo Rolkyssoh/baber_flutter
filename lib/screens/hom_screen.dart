@@ -1,7 +1,9 @@
 import 'package:barber_shops/dto/sho.dart';
 import 'package:barber_shops/model_service/shop_model.dart';
+import 'package:barber_shops/model_service/shop_provided_services.model.dart';
 import 'package:barber_shops/screens/bookmark_screen.dart';
 import 'package:barber_shops/screens/notification_screen.dart';
+import 'package:barber_shops/views-model/shop_provided_services.view-model.dart';
 import 'package:barber_shops/views-model/shop_view_model.dart';
 import 'package:barber_shops/widgets/shop_card.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +25,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ShopViewModel viewModel = ShopViewModel(ShopModel());
+  final ShopProvidedServicesViewModel servicesViewModel =
+      ShopProvidedServicesViewModel(ShopProvidedServicesModel());
 
   int _nearbyFilter = 0;
   int _popularFilter = 0;
@@ -33,11 +37,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     debugPrint('HomeScreen initState called');
     super.initState();
-    viewModel.addListener(_onShopViewModelChanged);
+    viewModel.addListener(_onViewModelChanged);
     viewModel.fetchShopData();
+    servicesViewModel.addListener(_onViewModelChanged);
+    servicesViewModel.fetchPrincipalServices();
   }
 
-  void _onShopViewModelChanged() {
+  void _onViewModelChanged() {
     if (mounted) {
       setState(() {});
     }
@@ -45,16 +51,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    viewModel.removeListener(_onShopViewModelChanged);
+    viewModel.removeListener(_onViewModelChanged);
     viewModel.dispose();
+    servicesViewModel.dispose();
     super.dispose();
   }
 
-  static const List<String> _filters = [
+  List<String> get _filters => [
     'All',
-    'Haircuts',
-    'Make up',
-    'Manicure',
+    ...servicesViewModel.services.map((service) => service.label),
   ];
 
   static const List<_Shop> _popularShops = [
@@ -64,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
       address: '813 Village Drive',
       distance: '3.4 km',
       rating: '4.6',
-      category: 'Haircuts',
+      categories: ['Coiffure'],
       image: 'assets/images/haircut2.jpg',
     ),
     _Shop(
@@ -73,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
       address: '88 Commercial Plaza',
       distance: '4.2 km',
       rating: '4.0',
-      category: 'Make up',
+      categories: ['Esthétique'],
       image: 'assets/images/haircut3.jpg',
     ),
     _Shop(
@@ -82,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
       address: '54 Artisan Avenue',
       distance: '4.5 km',
       rating: '4.6',
-      category: 'Haircuts',
+      categories: ['Onglerie'],
       image: 'assets/images/haircut.jpg',
     ),
   ];
@@ -98,7 +103,9 @@ class _HomeScreenState extends State<HomeScreen> {
               address: shop.address,
               distance: '1.2 km',
               rating: '4.8',
-              category: 'Haircuts',
+              categories: shop.barber_shop_service
+                  .map((service) => service.label)
+                  .toList(),
               image: shop.profileImage,
             ),
           )
@@ -123,7 +130,11 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 18),
             _buildBanner(),
             const SizedBox(height: 22),
-            _buildCategories(),
+            _buildCategories(
+              servicesViewModel.services
+                  .map((service) => service.label)
+                  .toList(),
+            ),
             const SizedBox(height: 24),
             _buildSectionTitle('Nearby Your Location'),
             const SizedBox(height: 14),
@@ -216,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => BookmarkScreen(
           shops: shopsById.values.toList(),
           bookmarkedIds: _bookmarkedShopIds,
+          categories: _filters,
           onBookmarksChanged: (bookmarkedIds) {
             setState(() {
               _bookmarkedShopIds
@@ -235,7 +247,9 @@ class _HomeScreenState extends State<HomeScreen> {
       address: shop.address,
       distance: '1.2 km',
       rating: '4.8',
-      category: 'Haircuts',
+      categories: shop.barber_shop_service
+          .map((service) => service.label)
+          .toList(),
       image: shop.profileImage,
     );
   }
@@ -247,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
       address: shop.address,
       distance: shop.distance,
       rating: shop.rating,
-      category: shop.category,
+      categories: shop.categories,
       image: shop.image,
     );
   }
@@ -454,19 +468,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ── Categories ──────────────────────────────────────────
-  Widget _buildCategories() {
-    const categories = [
-      (Icons.content_cut, 'Haircuts'),
-      (Icons.face_retouching_natural, 'Make up'),
-      (Icons.spa, 'Manicure'),
-      (Icons.self_improvement, 'Massage'),
-    ];
+  Widget _buildCategories(List<String> categoriesList) {
+    const categoryIcons = <String, IconData>{
+      'coiffure': Icons.content_cut,
+      'onglerie': Icons.brush,
+      'massage & spa': Icons.spa,
+      'esthetique': Icons.face_retouching_natural,
+      'cils & sourcils': Icons.visibility,
+      'maquillage': Icons.face,
+      'soins capillaires': Icons.face_retouching_natural,
+      'beauté du regard': Icons.style,
+      'tatouage & piercing': Icons.draw,
+      'Bien-être': Icons.self_improvement,
+      // 'soins du visage': Icons.face_retouching_natural,
+      // 'massage': Icons.self_improvement,
+    };
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: categories
-          .map(
-            (c) => Column(
+    return SizedBox(
+      height: 106,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: categoriesList.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final category = categoriesList[index];
+          return SizedBox(
+            width: 76,
+            child: Column(
               children: [
                 Container(
                   width: 62,
@@ -475,11 +503,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: const Color(0xFFFFF3E0),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(c.$1, color: _primary, size: 26),
+                  child: Icon(
+                    categoryIcons[category.trim().toLowerCase()] ??
+                        Icons.category_outlined,
+                    color: _primary,
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  c.$2,
+                  category,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -488,8 +524,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
-          )
-          .toList(),
+          );
+        },
+      ),
     );
   }
 
@@ -531,7 +568,7 @@ class _HomeScreenState extends State<HomeScreen> {
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final selected = selectedIndex == index;
-          return GestureDetector( 
+          return GestureDetector(
             onTap: () => onSelected(index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -567,7 +604,7 @@ class _HomeScreenState extends State<HomeScreen> {
         address: shop.address,
         distance: shop.distance,
         rating: shop.rating,
-        category: shop.category,
+        categories: shop.categories,
         image: shop.image,
       ),
       isBookmarked: isBookmarked,
@@ -644,7 +681,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<_Shop> _filterShops(List<_Shop> shops, int filterIndex) {
     final filter = _filters[filterIndex];
     if (filter == 'All') return shops;
-    return shops.where((s) => s.category == filter).toList();
+    return shops.where((s) => s.categories.contains(filter)).toList();
   }
 
   List<_Shop> _filterVisibleShops(List<_Shop> shops, int filterIndex) {
@@ -658,8 +695,8 @@ class _Shop {
   final String address;
   final String distance;
   final String rating;
-  final String category;
   final String image;
+  final List<String> categories;
 
   const _Shop({
     required this.id,
@@ -667,7 +704,7 @@ class _Shop {
     required this.address,
     required this.distance,
     required this.rating,
-    required this.category,
     required this.image,
+    required this.categories,
   });
 }

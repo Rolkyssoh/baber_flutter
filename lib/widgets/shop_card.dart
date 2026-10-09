@@ -12,7 +12,7 @@ class ShopCardData {
     required this.address,
     required this.distance,
     required this.rating,
-    required this.category,
+    required this.categories,
     required this.image,
   });
 
@@ -21,7 +21,7 @@ class ShopCardData {
   final String address;
   final String distance;
   final String rating;
-  final String category;
+  final List<String> categories;
   final String image;
 }
 

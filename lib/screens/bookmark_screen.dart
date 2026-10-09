@@ -11,23 +11,20 @@ class BookmarkScreen extends StatefulWidget {
     required this.shops,
     required this.bookmarkedIds,
     required this.onBookmarksChanged,
+    required this.categories,
   });
 
   final List<ShopCardData> shops;
   final Set<String> bookmarkedIds;
   final ValueChanged<Set<String>> onBookmarksChanged;
+  final List<String> categories;
 
   @override
   State<BookmarkScreen> createState() => _BookmarkScreenState();
 }
 
 class _BookmarkScreenState extends State<BookmarkScreen> {
-  static const List<String> _filters = [
-    'All',
-    'Haircuts',
-    'Make up',
-    'Manicure',
-  ];
+  List<String> get _filters => [...widget.categories];
 
   int _selectedFilter = 0;
 
@@ -35,7 +32,8 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   Widget build(BuildContext context) {
     final visibleShops = widget.shops.where((shop) {
       final matchesFilter =
-          _selectedFilter == 0 || shop.category == _filters[_selectedFilter];
+          _selectedFilter == 0 ||
+          shop.categories.contains(_filters[_selectedFilter]);
       return matchesFilter && widget.bookmarkedIds.contains(shop.id);
     }).toList();
 

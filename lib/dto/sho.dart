@@ -1,3 +1,5 @@
+import 'package:barber_shops/dto/shop_provided_services.dart';
+
 class Shop {
   Shop({
     required this.id,
@@ -16,6 +18,7 @@ class Shop {
     required this.managerId,
     required this.createdAt,
     required this.updatedAt,
+    required this.barber_shop_service,
   });
   final String id;
   final String name;
@@ -33,6 +36,7 @@ class Shop {
   final String managerId;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<ShopProvidedServices> barber_shop_service;
 
   static Shop fromJson(Map<String, Object?> json) {
     return Shop(
@@ -52,6 +56,14 @@ class Shop {
       managerId: _string(json, 'managerId'),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      barber_shop_service:
+          (json['barber_shop_service'] as List<Object?>? ?? const [])
+              .map(
+                (service) => ShopProvidedServices.fromJson(
+                  Map<String, Object?>.from(service as Map),
+                ),
+              )
+              .toList(),
     );
   }
 
