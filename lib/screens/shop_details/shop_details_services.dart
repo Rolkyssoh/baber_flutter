@@ -1,5 +1,6 @@
 import 'package:barber_shops/layouts/more_screen_layout.dart';
 import 'package:barber_shops/screens/shop_details/shop_services_list.dart';
+import 'package:barber_shops/widgets/shop_card.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -18,7 +19,9 @@ const Color _ink = Color(0xFF252525);
 const Color _orange = Color(0xFFFF9800);
 
 class ShopDetailsServices extends StatelessWidget {
-  const ShopDetailsServices({super.key});
+  const ShopDetailsServices({super.key, required this.shop});
+
+  final ShopCardData shop;
 
   @override
   Widget build(BuildContext context) {

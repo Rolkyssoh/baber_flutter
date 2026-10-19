@@ -62,29 +62,35 @@ class _HomeScreenState extends State<HomeScreen> {
     ...servicesViewModel.services.map((service) => service.label),
   ];
 
-  static const List<_Shop> _popularShops = [
-    _Shop(
+  static const List<ShopCardData> _popularShops = [
+    ShopCardData(
       id: 'popular-hair-force',
       name: 'Hair Force',
+      phone: '0755863211',
       address: '813 Village Drive',
+      hours: '08:00 - 21:00',
       distance: '3.4 km',
       rating: '4.6',
       categories: ['Coiffure'],
       image: 'assets/images/haircut2.jpg',
     ),
-    _Shop(
+    ShopCardData(
       id: 'popular-serenity-salon',
       name: 'Serenity Salon',
+      phone: '0755863289',
       address: '88 Commercial Plaza',
+      hours: '08:00 - 20:00',
       distance: '4.2 km',
       rating: '4.0',
       categories: ['Esthétique'],
       image: 'assets/images/haircut3.jpg',
     ),
-    _Shop(
+    ShopCardData(
       id: 'popular-razors-edge',
       name: "The Razor's Edge",
+      phone: '0755863270',
       address: '54 Artisan Avenue',
+      hours: '08:00 - 19:00',
       distance: '4.5 km',
       rating: '4.6',
       categories: ['Onglerie'],
@@ -97,10 +103,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final nearbyShops = _filterVisibleShops(
       viewModel.shop
           .map(
-            (shop) => _Shop(
+            (shop) => ShopCardData(
               id: shop.id,
               name: shop.name,
+              phone: shop.phone,
               address: shop.address,
+              hours: shop.hours,
               distance: '1.2 km',
               rating: '4.8',
               categories: shop.barber_shop_service
@@ -138,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
             _buildSectionTitle('Nearby Your Location'),
             const SizedBox(height: 14),
-            _buildFilterChips(
+            _buildFilterChips( 
               selectedIndex: _nearbyFilter,
               onSelected: (i) => setState(() => _nearbyFilter = i),
             ),
@@ -244,9 +252,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return ShopCardData(
       id: shop.id,
       name: shop.name,
+      phone: shop.phone,
       address: shop.address,
       distance: '1.2 km',
       rating: '4.8',
+      hours: shop.hours,
       categories: shop.barber_shop_service
           .map((service) => service.label)
           .toList(),
@@ -254,13 +264,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  ShopCardData _shopFromLocal(_Shop shop) {
+  ShopCardData _shopFromLocal(ShopCardData shop) {
     return ShopCardData(
       id: shop.id,
       name: shop.name,
+      phone: shop.phone,
       address: shop.address,
       distance: shop.distance,
       rating: shop.rating,
+      hours: shop.hours,
       categories: shop.categories,
       image: shop.image,
     );
@@ -594,16 +606,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ── Shop card ───────────────────────────────────────────
-  Widget _buildShopCard(_Shop shop) {
+  Widget _buildShopCard(ShopCardData shop) {
     final isBookmarked = _bookmarkedShopIds.contains(shop.id);
 
     return ShopCard(
       shop: ShopCardData(
         id: shop.id,
         name: shop.name,
+        phone: shop.phone,
         address: shop.address,
         distance: shop.distance,
         rating: shop.rating,
+        hours: shop.hours,
         categories: shop.categories,
         image: shop.image,
       ),
@@ -678,33 +692,40 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<_Shop> _filterShops(List<_Shop> shops, int filterIndex) {
+  List<ShopCardData> _filterShops(List<ShopCardData> shops, int filterIndex) {
     final filter = _filters[filterIndex];
     if (filter == 'All') return shops;
     return shops.where((s) => s.categories.contains(filter)).toList();
   }
 
-  List<_Shop> _filterVisibleShops(List<_Shop> shops, int filterIndex) {
+  List<ShopCardData> _filterVisibleShops(
+    List<ShopCardData> shops,
+    int filterIndex,
+  ) {
     return _filterShops(shops, filterIndex);
   }
 }
 
-class _Shop {
-  final String id;
-  final String name;
-  final String address;
-  final String distance;
-  final String rating;
-  final String image;
-  final List<String> categories;
+// class _Shop {
+//   final String id;
+//   final String name;
+//   final String phone;
+//   final String address;
+//   final String hours;
+//   final String distance;
+//   final String rating;
+//   final String image;
+//   final List<String> categories;
 
-  const _Shop({
-    required this.id,
-    required this.name,
-    required this.address,
-    required this.distance,
-    required this.rating,
-    required this.image,
-    required this.categories,
-  });
-}
+//   const _Shop({
+//     required this.id,
+//     required this.name,
+//     required this.phone,
+//     required this.address,
+//     required this.hours,
+//     required this.distance,
+//     required this.rating,
+//     required this.image,
+//     required this.categories,
+//   });
+// }

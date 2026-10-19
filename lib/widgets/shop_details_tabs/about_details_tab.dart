@@ -1,5 +1,6 @@
 import 'package:barber_shops/widgets/custom_map_painter.dart';
 import 'package:barber_shops/widgets/section_details.dart';
+import 'package:barber_shops/widgets/shop_card.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -8,16 +9,18 @@ const Color _ink = Color(0xFF252525);
 const Color _orange = Color(0xFFFF9800);
 
 class AboutUsDetailsTab extends StatelessWidget {
-  const AboutUsDetailsTab({super.key});
+  const AboutUsDetailsTab({super.key, required this.shop});
+
+  final ShopCardData shop;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         _buildAbout(),
-        _buildWorkingHours(),
-        _buildContact(),
-        _buildAddress(),
+        _buildWorkingHours(shop),
+        _buildContact(shop),
+        _buildAddress(shop),
       ],
     );
   }
@@ -59,24 +62,24 @@ class AboutUsDetailsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildWorkingHours() {
+  Widget _buildWorkingHours(ShopCardData shop) {
     return SectionDetails(
       title: 'Working Hours',
       child: Column(
         children: [
-          _hoursRow('Monday - Friday', '08:00 AM - 21:00 PM'),
+          _hoursRow('Lundi - Vendredi', shop.hours),
           const SizedBox(height: 5),
-          _hoursRow('Saturday - Sunday', '10:00 AM - 20:00 PM'),
+          _hoursRow('Samedi - Dimanche', shop.hours),
         ],
       ),
     );
   }
 
-  Widget _buildContact() {
+  Widget _buildContact(ShopCardData shop) {
     return SectionDetails(
       title: 'Contact us',
       child: Text(
-        '(406) 555-0120',
+        shop.phone,
         style: GoogleFonts.poppins(
           color: _orange,
           fontSize: 10,
@@ -86,7 +89,7 @@ class AboutUsDetailsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildAddress() {
+  Widget _buildAddress(ShopCardData shop) {
     return SectionDetails(
       title: 'Our Address',
       action: 'See on Maps',
@@ -95,7 +98,7 @@ class AboutUsDetailsTab extends StatelessWidget {
         children: [
           _detailLine(
             Icons.location_on,
-            '6993 Meadow Valley Terrace, New York',
+            shop.address,
           ),
           const SizedBox(height: 10),
           ClipRRect(

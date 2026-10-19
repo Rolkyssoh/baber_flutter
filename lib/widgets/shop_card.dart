@@ -9,18 +9,22 @@ class ShopCardData {
   const ShopCardData({
     required this.id,
     required this.name,
+    required this.phone,
     required this.address,
     required this.distance,
     required this.rating,
+    required this.hours,
     required this.categories,
     required this.image,
   });
 
   final String id;
   final String name;
+  final String phone;
   final String address;
   final String distance;
   final String rating;
+  final String hours;
   final List<String> categories;
   final String image;
 }
@@ -50,7 +54,7 @@ class ShopCard extends StatelessWidget {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const ShopDetailsScreen()),
+            MaterialPageRoute(builder: (_) => ShopDetailsScreen(shop: shop)),
           );
         },
         child: Container(

@@ -1,4 +1,5 @@
 import 'package:barber_shops/widgets/section_details.dart';
+import 'package:barber_shops/widgets/shop_card.dart';
 import 'package:barber_shops/widgets/shop_details_tabs/about_details_tab.dart';
 import 'package:barber_shops/widgets/shop_details_tabs/gallery_details_tab.dart';
 import 'package:barber_shops/widgets/shop_details_tabs/package_details_tab.dart';
@@ -12,7 +13,9 @@ const Color _ink = Color(0xFF252525);
 const Color _muted = Color(0xFF777777);
 
 class ShopDetailsScreen extends StatefulWidget {
-  const ShopDetailsScreen({super.key});
+  const ShopDetailsScreen({super.key, required this.shop});
+
+  final ShopCardData shop;
 
   @override
   State<ShopDetailsScreen> createState() => _ShopDetailsScreenState();
@@ -37,11 +40,11 @@ class _ShopDetailsScreenState extends State<ShopDetailsScreen> {
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(child: _buildHero(context)),
-            SliverToBoxAdapter(child: _buildShopSummary()),
+            SliverToBoxAdapter(child: _buildShopSummary(widget.shop)),
             SliverToBoxAdapter(child: _buildQuickActions()),
             SliverToBoxAdapter(child: _buildSpecialists()),
             SliverToBoxAdapter(child: _buildTabs()),
-            SliverToBoxAdapter(child: _buildSelectedTabContent()),
+            SliverToBoxAdapter(child: _buildSelectedTabContent(widget.shop)),
             const SliverToBoxAdapter(child: SizedBox(height: 96)),
           ],
         ),
@@ -157,7 +160,7 @@ class _ShopDetailsScreenState extends State<ShopDetailsScreen> {
     );
   }
 
-  Widget _buildShopSummary() {
+  Widget _buildShopSummary(ShopCardData shop) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
       child: Row(
@@ -168,7 +171,7 @@ class _ShopDetailsScreenState extends State<ShopDetailsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Barbarella Inova',
+                  shop.name,
                   style: GoogleFonts.poppins(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -178,10 +181,10 @@ class _ShopDetailsScreenState extends State<ShopDetailsScreen> {
                 const SizedBox(height: 4),
                 _detailLine(
                   Icons.location_on,
-                  '6993 Meadow Valley Terrace, New York',
+                  shop.address,
                 ),
                 const SizedBox(height: 2),
-                _detailLine(Icons.star, '4.8 (3,279 reviews)', star: true),
+                _detailLine(Icons.star, shop.rating, star: true),
               ],
             ),
           ),
@@ -357,9 +360,9 @@ class _ShopDetailsScreenState extends State<ShopDetailsScreen> {
     );
   }
 
-  Widget _buildSelectedTabContent() {
+  Widget _buildSelectedTabContent(ShopCardData shop) {
     if (_selectedTab == 1) {
-      return ServicesDetailsTab();
+      return ServicesDetailsTab(shop: shop);
     }
     if (_selectedTab == 2) {
       return PackageDetailsTab();
@@ -371,6 +374,6 @@ class _ShopDetailsScreenState extends State<ShopDetailsScreen> {
       return ReviewDetailsTab();
     }
 
-    return AboutUsDetailsTab();
+    return AboutUsDetailsTab(shop: shop);
   }
 }

@@ -1,3 +1,6 @@
+import 'package:barber_shops/dto/auth.dto.dart';
+import 'package:barber_shops/model_service/auth.model.dart';
+import 'package:barber_shops/screens/authentication/sign_in_form.dart';
 import 'package:barber_shops/utils/app_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,15 +15,17 @@ class SignUpForm extends StatefulWidget {
 class _SignUpFormState extends State<SignUpForm> {
   final _formKey = GlobalKey<FormState>();
 
-  final _fullNameCtrl = TextEditingController();
-  final _nicknameCtrl = TextEditingController();
-  final _dobCtrl = TextEditingController();
+  final _firstNameCtrl = TextEditingController();
+  final _lastNameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  final _genderCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _authModel = AuthModel();
 
   String _selectedCountry = 'US';
-  String _selectedGender = '';
+  bool _obscurePassword = true;
+  bool _isSubmitting = false;
 
   final List<Map<String, String>> _countries = [
     {'code': 'US', 'name': 'United States', 'flag': '🇺🇸', 'dial': '+1'},
@@ -48,97 +53,57 @@ class _SignUpFormState extends State<SignUpForm> {
   Map<String, String> get _selectedCountryData =>
       _countries.firstWhere((c) => c['code'] == _selectedCountry);
 
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000, 1, 1),
-      firstDate: DateTime(1950),
-      lastDate: now,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: Color(0xFFFF9800)),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() {
-        _dobCtrl.text =
-            '${picked.day.toString().padLeft(2, '0')}/'
-            '${picked.month.toString().padLeft(2, '0')}/'
-            '${picked.year}';
-      });
+  Future<void> _onContinue() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
-  }
 
-  void _pickGender() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Select Gender',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...['Male', 'Female', 'Other'].map(
-                (gender) => ListTile(
-                  leading: Icon(
-                    gender == 'Male'
-                        ? Icons.male
-                        : gender == 'Female'
-                        ? Icons.female
-                        : Icons.transgender,
-                    color: const Color(0xFFFF9800),
-                  ),
-                  title: Text(gender, style: GoogleFonts.poppins(fontSize: 16)),
-                  trailing: _selectedGender == gender
-                      ? const Icon(Icons.check, color: Color(0xFFFF9800))
-                      : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedGender = gender;
-                      _genderCtrl.text = gender;
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
+    setState(() => _isSubmitting = true);
+    try {
+      final phone = _phoneCtrl.text.trim();
+      await _authModel.registerUser(
+        RegisterDto(
+          firstName: _firstNameCtrl.text.trim(),
+          lastName: _lastNameCtrl.text.trim(),
+          email: _emailCtrl.text.trim(),
+          password: _passwordCtrl.text,
+          phone: phone.isEmpty
+              ? null
+              : '${_selectedCountryData['dial']} $phone',
+          address: _addressCtrl.text.trim().isEmpty
+              ? null
+              : _addressCtrl.text.trim(),
+        ),
+      );
 
-  void _onContinue() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: proceed to next step
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Inscription réussie. Connectez-vous.')),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SignInForm()),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Échec de l’inscription : $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
   @override
   void dispose() {
-    _fullNameCtrl.dispose();
-    _nicknameCtrl.dispose();
-    _dobCtrl.dispose();
+    _firstNameCtrl.dispose();
+    _lastNameCtrl.dispose();
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
-    _genderCtrl.dispose();
+    _addressCtrl.dispose();
+    _passwordCtrl.dispose();
     super.dispose();
   }
 
@@ -217,43 +182,28 @@ class _SignUpFormState extends State<SignUpForm> {
                 ),
                 const SizedBox(height: 32),
 
-                // ── Full Name ──
-                _buildLabel('Full Name'),
+                // ── First Name ──
+                _buildLabel('First Name'),
                 const SizedBox(height: 8),
                 AppTextField(
-                  controller: _fullNameCtrl,
-                  hint: 'Enter your full name',
+                  controller: _firstNameCtrl,
+                  hint: 'Enter your first name',
                   prefixIcon: Icons.person_outline,
                   validator: (v) => v == null || v.trim().isEmpty
-                      ? 'Full name is required'
+                      ? 'First name is required'
                       : null,
                 ),
                 const SizedBox(height: 20),
 
-                // ── Nickname ──
-                _buildLabel('Nickname'),
+                // ── Last Name ──
+                _buildLabel('Last Name'),
                 const SizedBox(height: 8),
                 AppTextField(
-                  controller: _nicknameCtrl,
-                  hint: 'Enter your nickname',
+                  controller: _lastNameCtrl,
+                  hint: 'Enter your last name',
                   prefixIcon: Icons.badge_outlined,
                   validator: (v) => v == null || v.trim().isEmpty
-                      ? 'Nickname is required'
-                      : null,
-                ),
-                const SizedBox(height: 20),
-
-                // ── Date of Birth ──
-                _buildLabel('Date of Birth'),
-                const SizedBox(height: 8),
-                AppTextField(
-                  controller: _dobCtrl,
-                  hint: 'DD/MM/YYYY',
-                  prefixIcon: Icons.calendar_today_outlined,
-                  readOnly: true,
-                  onTap: _pickDate,
-                  validator: (v) => v == null || v.trim().isEmpty
-                      ? 'Date of birth is required'
+                      ? 'Last name is required'
                       : null,
                 ),
                 const SizedBox(height: 20),
@@ -267,8 +217,9 @@ class _SignUpFormState extends State<SignUpForm> {
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return 'Email is required';
+                    }
                     if (!RegExp(
                       r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
                     ).hasMatch(v.trim())) {
@@ -360,27 +311,51 @@ class _SignUpFormState extends State<SignUpForm> {
                         controller: _phoneCtrl,
                         hint: 'Phone number',
                         keyboardType: TextInputType.phone,
-                        validator: (v) => v == null || v.trim().isEmpty
-                            ? 'Phone number is required'
-                            : null,
+                        validator: (_) => null,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
 
-                // ── Gender ──
-                _buildLabel('Gender'),
+                // ── Address ──
+                _buildLabel('Address (optional)'),
                 const SizedBox(height: 8),
                 AppTextField(
-                  controller: _genderCtrl,
-                  hint: 'Select your gender',
-                  prefixIcon: Icons.people_outline,
-                  readOnly: true,
-                  onTap: _pickGender,
-                  validator: (v) => v == null || v.trim().isEmpty
-                      ? 'Gender is required'
-                      : null,
+                  controller: _addressCtrl,
+                  hint: 'Enter your address',
+                  prefixIcon: Icons.location_on_outlined,
+                  validator: (_) => null,
+                ),
+                const SizedBox(height: 20),
+
+                // ── Password ──
+                _buildLabel('Password'),
+                const SizedBox(height: 8),
+                AppTextField(
+                  controller: _passwordCtrl,
+                  hint: 'At least 6 characters',
+                  prefixIcon: Icons.lock_outline,
+                  obscureText: _obscurePassword,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Password is required';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must contain at least 6 characters';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 36),
 
@@ -388,7 +363,7 @@ class _SignUpFormState extends State<SignUpForm> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _onContinue,
+                    onPressed: _isSubmitting ? null : _onContinue,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF9800),
                       foregroundColor: Colors.white,
@@ -399,7 +374,7 @@ class _SignUpFormState extends State<SignUpForm> {
                       ),
                     ),
                     child: Text(
-                      'Continue',
+                      _isSubmitting ? 'Creating account...' : 'Continue',
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -425,58 +400,6 @@ class _SignUpFormState extends State<SignUpForm> {
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: const Color(0xFF1A1A2E),
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    IconData? prefixIcon,
-    bool readOnly = false,
-    VoidCallback? onTap,
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      readOnly: readOnly,
-      onTap: onTap,
-      keyboardType: keyboardType,
-      validator: validator,
-      style: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFF1A1A2E)),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[400]),
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: const Color(0xFFFF9800), size: 22)
-            : null,
-        filled: true,
-        fillColor: Colors.grey[50],
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFFF9800), width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.redAccent),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-        ),
       ),
     );
   }

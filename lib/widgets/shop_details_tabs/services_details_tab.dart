@@ -1,5 +1,6 @@
 import 'package:barber_shops/screens/shop_details/shop_details_services.dart';
 import 'package:barber_shops/widgets/section_details.dart';
+import 'package:barber_shops/widgets/shop_card.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -18,7 +19,9 @@ const Color _ink = Color(0xFF252525);
 const Color _orange = Color(0xFFFF9800);
 
 class ServicesDetailsTab extends StatelessWidget {
-  const ServicesDetailsTab({super.key});
+  const ServicesDetailsTab({super.key, required this.shop});
+
+  final ShopCardData shop;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +30,7 @@ class ServicesDetailsTab extends StatelessWidget {
       action: 'See All',
       onTxtBtnPressed: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ShopDetailsServices()),
+        MaterialPageRoute(builder: (_) => ShopDetailsServices(shop: shop)),
       ),
       child: Column(
         children: services

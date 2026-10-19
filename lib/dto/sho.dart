@@ -19,6 +19,7 @@ class Shop {
     required this.createdAt,
     required this.updatedAt,
     required this.barber_shop_service,
+    required this.favorite_barber_shop,
   });
   final String id;
   final String name;
@@ -37,6 +38,7 @@ class Shop {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<ShopProvidedServices> barber_shop_service;
+  final List<ShopProvidedServices> favorite_barber_shop;
 
   static Shop fromJson(Map<String, Object?> json) {
     return Shop(
@@ -58,6 +60,14 @@ class Shop {
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       barber_shop_service:
           (json['barber_shop_service'] as List<Object?>? ?? const [])
+              .map(
+                (service) => ShopProvidedServices.fromJson(
+                  Map<String, Object?>.from(service as Map),
+                ),
+              )
+              .toList(),
+      favorite_barber_shop:
+          (json['favorite_barber_shop'] as List<Object?>? ?? const [])
               .map(
                 (service) => ShopProvidedServices.fromJson(
                   Map<String, Object?>.from(service as Map),

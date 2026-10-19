@@ -2,6 +2,9 @@ import 'package:barber_shops/screens/authentication/auth_dashboard.dart';
 import 'package:barber_shops/screens/authentication/forget_pwd.dart';
 import 'package:barber_shops/screens/authentication/sign_up_form.dart';
 import 'package:barber_shops/screens/hom_screen.dart';
+import 'package:barber_shops/dto/auth.dto.dart';
+import 'package:barber_shops/model_service/auth.model.dart';
+import 'package:barber_shops/model_service/session_storage.dart';
 import 'package:barber_shops/utils/app_text_field.dart';
 import 'package:barber_shops/utils/social_icons.dart';
 import 'package:flutter/material.dart';
@@ -19,8 +22,47 @@ class _SignInFormState extends State<SignInForm> {
 
   final emailCtrl = TextEditingController();
   final pwdCtrl = TextEditingController();
+  final _authModel = AuthModel();
+  final _sessionStorage = SessionStorage();
   bool _rememberMe = false;
   bool _obscurePassword = true;
+  bool _isSubmitting = false;
+
+  Future<void> _signIn() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final session = await _authModel.loginUser(
+        LoginDto(email: emailCtrl.text.trim(), password: pwdCtrl.text),
+      );
+
+      await _sessionStorage.saveSession(session);
+      debugPrint('access_token: ${session.accessToken}');
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Bienvenue ${session.user.firstName} !'),
+        ),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => HomeScreen()),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Échec de la connexion : $error')));
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -113,9 +155,15 @@ class _SignInFormState extends State<SignInForm> {
                       _obscurePassword = !_obscurePassword;
                     }),
                   ),
-                  validator: (v) => v == null || v.trim().isEmpty
-                      ? "Password is required"
-                      : null,
+                  validator: (v) {
+                    if (v == null || v.isEmpty) {
+                      return "Password is required";
+                    }
+                    if (v.length < 6) {
+                      return "Password must contain at least 6 characters";
+                    }
+                    return null;
+                  },
                 ),
 
                 const SizedBox(height: 12),
@@ -158,14 +206,7 @@ class _SignInFormState extends State<SignInForm> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => HomeScreen()),
-                        );
-                      }
-                    },
+                    onPressed: _isSubmitting ? null : _signIn,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF9800),
                       foregroundColor: Colors.white,
@@ -176,7 +217,7 @@ class _SignInFormState extends State<SignInForm> {
                       ),
                     ),
                     child: Text(
-                      "Sign in",
+                      _isSubmitting ? "Signing in..." : "Sign in",
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
