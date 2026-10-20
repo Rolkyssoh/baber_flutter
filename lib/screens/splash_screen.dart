@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../model_service/session_storage.dart';
+import 'hom_screen.dart';
 import 'welcom_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -31,15 +33,24 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(seconds: 1),
     )..repeat();
 
-    // Navigation vers le WelcomeScreen après 3 secondes
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const WelcomScreen()),
-        );
-      }
-    });
+    _redirectAfterSplash();
+  }
+
+  Future<void> _redirectAfterSplash() async {
+    await Future.delayed(const Duration(seconds: 3));
+    final accessToken = await SessionStorage().getAccessToken();
+
+    if (!mounted) return;
+
+    final destination = accessToken != null && accessToken.isNotEmpty
+        ? HomeScreen()
+        : const WelcomScreen();
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => destination),
+      (_) => false,
+    );
   }
 
   @override

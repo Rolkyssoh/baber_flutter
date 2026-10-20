@@ -24,11 +24,11 @@ class IUserDto {
   final String address;
   final String phone;
   final String role;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final Shop manager_barber_shop;
-  final Shop client_device;
-  final Shop user_clients_profile;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final Shop? manager_barber_shop;
+  final Shop? client_device;
+  final Shop? user_clients_profile;
   final List<Shop> favoritesShop;
 
   static IUserDto fromJson(Map<String, Object?> json) {
@@ -40,17 +40,11 @@ class IUserDto {
       address: _string(json, 'address'),
       phone: _string(json, 'phone'),
       role: _string(json, 'role'),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
-      manager_barber_shop: Shop.fromJson(
-        Map<String, dynamic>.from(json['manager_barber_shop'] as Map),
-      ),
-      client_device: Shop.fromJson(
-        Map<String, dynamic>.from(json['client_device'] as Map),
-      ),
-      user_clients_profile: Shop.fromJson(
-        Map<String, dynamic>.from(json['user_clients_profile'] as Map),
-      ),
+      createdAt: _date(json, 'createdAt'),
+      updatedAt: _date(json, 'updatedAt'),
+      manager_barber_shop: _shop(json, 'manager_barber_shop'),
+      client_device: _shop(json, 'client_device'),
+      user_clients_profile: _shop(json, 'user_clients_profile'),
       favoritesShop: (json['favoritesShop'] as List<Object?>? ?? const [])
           .map(
             (service) =>
@@ -69,5 +63,17 @@ class IUserDto {
       return value['name'] as String? ?? value['id'] as String? ?? '';
     }
     return '';
+  }
+
+  static DateTime? _date(Map<String, Object?> json, String key) {
+    final value = json[key];
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
+  static Shop? _shop(Map<String, Object?> json, String key) {
+    final value = json[key];
+    if (value is Map) return Shop.fromJson(Map<String, Object?>.from(value));
+    return null;
   }
 }

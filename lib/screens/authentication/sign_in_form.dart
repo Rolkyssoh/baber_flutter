@@ -44,13 +44,12 @@ class _SignInFormState extends State<SignInForm> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Bienvenue ${session.user.firstName} !'),
-        ),
+        SnackBar(content: Text('Bienvenue ${session.user.firstName} !')),
       );
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => HomeScreen()),
+        (_) => false,
       );
     } catch (error) {
       if (!mounted) return;

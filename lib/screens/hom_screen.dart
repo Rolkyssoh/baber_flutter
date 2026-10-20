@@ -1,8 +1,10 @@
 import 'package:barber_shops/dto/sho.dart';
+import 'package:barber_shops/model_service/favorites.model.dart';
 import 'package:barber_shops/model_service/shop_model.dart';
 import 'package:barber_shops/model_service/shop_provided_services.model.dart';
 import 'package:barber_shops/screens/bookmark_screen.dart';
 import 'package:barber_shops/screens/notification_screen.dart';
+import 'package:barber_shops/screens/profile_settings/profile_settings_home.dart';
 import 'package:barber_shops/views-model/shop_provided_services.view-model.dart';
 import 'package:barber_shops/views-model/shop_view_model.dart';
 import 'package:barber_shops/widgets/shop_card.dart';
@@ -24,7 +26,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final ShopViewModel viewModel = ShopViewModel(ShopModel());
+  final ShopViewModel shopViewModel = ShopViewModel(ShopModel());
   final ShopProvidedServicesViewModel servicesViewModel =
       ShopProvidedServicesViewModel(ShopProvidedServicesModel());
 
@@ -32,15 +34,17 @@ class _HomeScreenState extends State<HomeScreen> {
   int _popularFilter = 0;
   int _navIndex = 0;
   final Set<String> _bookmarkedShopIds = {};
+  final _favoritesModel = FavoritesModel();
 
   @override
   void initState() {
     debugPrint('HomeScreen initState called');
     super.initState();
-    viewModel.addListener(_onViewModelChanged);
-    viewModel.fetchShopData();
+    shopViewModel.addListener(_onViewModelChanged);
+    shopViewModel.fetchShopData();
     servicesViewModel.addListener(_onViewModelChanged);
     servicesViewModel.fetchPrincipalServices();
+    _loadFavorites();
   }
 
   void _onViewModelChanged() {
@@ -49,10 +53,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadFavorites() async {
+    try {
+      final favorites = await _favoritesModel.getFavoritesShop();
+      debugPrint('RRESPONSE:::::::: $favorites');
+      if (!mounted) return;
+      setState(() {
+        _bookmarkedShopIds
+          ..clear()
+          ..addAll(favorites.map((favorite) => favorite.barbershopId));
+      });
+    } catch (error) {
+      debugPrint('Failed to load favorites: $error');
+    }
+  }
+
   @override
   void dispose() {
-    viewModel.removeListener(_onViewModelChanged);
-    viewModel.dispose();
+    shopViewModel.removeListener(_onViewModelChanged);
+    shopViewModel.dispose();
     servicesViewModel.dispose();
     super.dispose();
   }
@@ -101,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final nearbyShops = _filterVisibleShops(
-      viewModel.shop
+      shopViewModel.shop
           .map(
             (shop) => ShopCardData(
               id: shop.id,
@@ -125,57 +144,77 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          children: [
-            const SizedBox(height: 8),
-            _buildHeader(),
-            const SizedBox(height: 20),
-            _buildGreeting(),
-            const SizedBox(height: 18),
-            _buildSearchBar(),
-            const SizedBox(height: 18),
-            _buildBanner(),
-            const SizedBox(height: 22),
-            _buildCategories(
-              servicesViewModel.services
-                  .map((service) => service.label)
-                  .toList(),
-            ),
-            const SizedBox(height: 24),
-            _buildSectionTitle('Nearby Your Location'),
-            const SizedBox(height: 14),
-            _buildFilterChips( 
-              selectedIndex: _nearbyFilter,
-              onSelected: (i) => setState(() => _nearbyFilter = i),
-            ),
-            const SizedBox(height: 16),
-            ...nearbyShops.map(
-              (shop) => Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: _buildShopCard(shop),
-              ),
-            ),
-            const SizedBox(height: 10),
-            _buildSectionTitle('Most Popular'),
-            const SizedBox(height: 14),
-            _buildFilterChips(
-              selectedIndex: _popularFilter,
-              onSelected: (i) => setState(() => _popularFilter = i),
-            ),
-            const SizedBox(height: 16),
-            ...popularShops.map(
-              (shop) => Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: _buildShopCard(shop),
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
+      body: IndexedStack(
+        index: _navIndex,
+        children: [
+          _buildHomeBody(nearbyShops, popularShops),
+          const _PlaceholderTab(
+            icon: Icons.explore_outlined,
+            title: 'Explore',
+          ),
+          const _PlaceholderTab(
+            icon: Icons.calendar_month_outlined,
+            title: 'My Booking',
+          ),
+          const _PlaceholderTab(icon: Icons.inbox_outlined, title: 'Inbox'),
+          const ProfileSettingsHome(),
+        ],
       ),
       bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildHomeBody(
+    List<ShopCardData> nearbyShops,
+    List<ShopCardData> popularShops,
+  ) {
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        children: [
+          const SizedBox(height: 8),
+          _buildHeader(),
+          const SizedBox(height: 20),
+          _buildGreeting(),
+          const SizedBox(height: 18),
+          _buildSearchBar(),
+          const SizedBox(height: 18),
+          _buildBanner(),
+          const SizedBox(height: 22),
+          _buildCategories(
+            servicesViewModel.services.map((service) => service.label).toList(),
+          ),
+          const SizedBox(height: 24),
+          _buildSectionTitle('Nearby Your Location'),
+          const SizedBox(height: 14),
+          _buildFilterChips(
+            selectedIndex: _nearbyFilter,
+            onSelected: (i) => setState(() => _nearbyFilter = i),
+          ),
+          const SizedBox(height: 16),
+          ...nearbyShops.map(
+            (shop) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _buildShopCard(shop),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildSectionTitle('Most Popular'),
+          const SizedBox(height: 14),
+          _buildFilterChips(
+            selectedIndex: _popularFilter,
+            onSelected: (i) => setState(() => _popularFilter = i),
+          ),
+          const SizedBox(height: 16),
+          ...popularShops.map(
+            (shop) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _buildShopCard(shop),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
 
@@ -225,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openBookmarks() {
     final shopsById = <String, ShopCardData>{
-      for (final shop in viewModel.shop.map(_shopFromApi)) shop.id: shop,
+      for (final shop in shopViewModel.shop.map(_shopFromApi)) shop.id: shop,
       for (final shop in _popularShops.map(_shopFromLocal)) shop.id: shop,
     };
 
@@ -606,6 +645,39 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ── Shop card ───────────────────────────────────────────
+  Future<void> _onBookmarkPressed(ShopCardData shop) async {
+    final wasBookmarked = _bookmarkedShopIds.contains(shop.id);
+
+    setState(() {
+      if (wasBookmarked) {
+        _bookmarkedShopIds.remove(shop.id);
+      } else {
+        _bookmarkedShopIds.add(shop.id);
+      }
+    });
+
+    try {
+      if (wasBookmarked) {
+        await _favoritesModel.removeShopFromFavorite(barbershopId: shop.id);
+      } else {
+        await _favoritesModel.addShopToFavorite(barbershopId: shop.id);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      // Revert the optimistic update.
+      setState(() {
+        if (wasBookmarked) {
+          _bookmarkedShopIds.add(shop.id);
+        } else {
+          _bookmarkedShopIds.remove(shop.id);
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Échec de la mise à jour des favoris : $error')),
+      );
+    }
+  }
+
   Widget _buildShopCard(ShopCardData shop) {
     final isBookmarked = _bookmarkedShopIds.contains(shop.id);
 
@@ -622,15 +694,7 @@ class _HomeScreenState extends State<HomeScreen> {
         image: shop.image,
       ),
       isBookmarked: isBookmarked,
-      onBookmarkPressed: () {
-        setState(() {
-          if (isBookmarked) {
-            _bookmarkedShopIds.remove(shop.id);
-          } else {
-            _bookmarkedShopIds.add(shop.id);
-          }
-        });
-      },
+      onBookmarkPressed: () => _onBookmarkPressed(shop),
     );
   }
 
@@ -706,26 +770,35 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// class _Shop {
-//   final String id;
-//   final String name;
-//   final String phone;
-//   final String address;
-//   final String hours;
-//   final String distance;
-//   final String rating;
-//   final String image;
-//   final List<String> categories;
+class _PlaceholderTab extends StatelessWidget {
+  const _PlaceholderTab({required this.icon, required this.title});
 
-//   const _Shop({
-//     required this.id,
-//     required this.name,
-//     required this.phone,
-//     required this.address,
-//     required this.hours,
-//     required this.distance,
-//     required this.rating,
-//     required this.image,
-//     required this.categories,
-//   });
-// }
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 56, color: Colors.grey[300]),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[500],
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Bientôt disponible',
+            style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[400]),
+          ),
+        ],
+      ),
+    );
+  }
+}

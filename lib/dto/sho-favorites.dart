@@ -12,22 +12,32 @@ class ShopFavoritesDto {
   });
   final String userId;
   final String barbershopId;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final IUserDto user;
-  final ShopProvidedServices barberShop;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final IUserDto? user;
+  final ShopProvidedServices? barberShop;
 
   static ShopFavoritesDto fromJson(Map<String, Object?> json) {
     return ShopFavoritesDto(
       userId: _string(json, 'userId'),
       barbershopId: _string(json, 'barbershopId'),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
-      user: IUserDto.fromJson(Map<String, dynamic>.from(json['user'] as Map)),
-      barberShop: ShopProvidedServices.fromJson(
-        Map<String, dynamic>.from(json['barberShop'] as Map),
-      ),
+      createdAt: _date(json, 'createdAt'),
+      updatedAt: _date(json, 'updatedAt'),
+      user: json['user'] is Map
+          ? IUserDto.fromJson(Map<String, Object?>.from(json['user'] as Map))
+          : null,
+      barberShop: json['barberShop'] is Map
+          ? ShopProvidedServices.fromJson(
+              Map<String, Object?>.from(json['barberShop'] as Map),
+            )
+          : null,
     );
+  }
+
+  static DateTime? _date(Map<String, Object?> json, String key) {
+    final value = json[key];
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
 
   static String _string(Map<String, Object?> json, String key) {
