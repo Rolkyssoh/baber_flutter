@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../model_service/session_storage.dart';
+import 'authentication/auth_dashboard.dart';
 import 'hom_screen.dart';
 import 'welcom_screen.dart';
 
@@ -37,13 +38,26 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _redirectAfterSplash() async {
-    await Future.delayed(const Duration(seconds: 3));
-    final accessToken = await SessionStorage().getAccessToken();
+    await Future.delayed(const Duration(seconds: 2));
+    final sessionStorage = SessionStorage();
+    final accessToken = await sessionStorage.getAccessToken();
 
     if (!mounted) return;
 
-    final destination = accessToken != null && accessToken.isNotEmpty
-        ? HomeScreen()
+    if (accessToken != null && accessToken.isNotEmpty) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => HomeScreen()),
+        (_) => false,
+      );
+      return;
+    }
+
+    final onboardingCompleted = await sessionStorage.isOnboardingCompleted();
+    if (!mounted) return;
+
+    final destination = onboardingCompleted
+        ? AuthDashboard()
         : const WelcomScreen();
 
     Navigator.pushAndRemoveUntil(

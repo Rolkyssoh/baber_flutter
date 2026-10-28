@@ -6,6 +6,7 @@ class SessionStorage {
   static const _userIdKey = 'auth.user_id';
   static const _emailKey = 'auth.user_email';
   static const _nameKey = 'auth.user_name';
+  static const _onboardingKey = 'onboarding.completed';
 
   Future<void> saveSession(LoginResponseDto session) async {
     final prefs = await SharedPreferences.getInstance();
@@ -44,5 +45,15 @@ class SessionStorage {
     await prefs.remove(_userIdKey);
     await prefs.remove(_emailKey);
     await prefs.remove(_nameKey);
+  }
+
+  Future<bool> isOnboardingCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_onboardingKey) ?? false;
+  }
+
+  Future<void> markOnboardingCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingKey, true);
   }
 }

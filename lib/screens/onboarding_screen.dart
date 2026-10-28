@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../model_service/session_storage.dart';
 import 'authentication/auth_dashboard.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -36,18 +37,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
   ];
 
-  void _onNextPressed() {
+  Future<void> _onNextPressed() async {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AuthDashboard()),
-      );
-    } 
+      return;
+    }
+
+    await SessionStorage().markOnboardingCompleted();
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const AuthDashboard()),
+    );
   }
 
   @override
